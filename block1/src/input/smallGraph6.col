@@ -1,0 +1,5 @@
+c
+c A 3-colorable Graph, small,
+c
+p edge 2 1
+e 1 2
