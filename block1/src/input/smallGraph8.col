@@ -1,0 +1,8 @@
+c
+c A 3-colorable Graph, small,
+c not colorable without blue
+c
+p edge 4 3
+e 1 2
+e 2 3
+e 3 4
