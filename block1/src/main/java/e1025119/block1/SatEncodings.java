@@ -1,16 +1,16 @@
 package e1025119.block1;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
-import org.javatuples.Pair;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.sat4j.core.Vec;
 import org.sat4j.core.VecInt;
-import org.sat4j.specs.*;
+import org.sat4j.specs.IVec;
+import org.sat4j.specs.IVecInt;
 
 import e1025119.block1.Coloring.Color;
 
@@ -22,11 +22,6 @@ import e1025119.block1.Coloring.Color;
  */
 public class SatEncodings {
 
-	/* map for lookup of atom meaning:  
-	 *  Key = pair of color, atom number in propositional formula
-	 *  Value = node integer value */
-	private Map<Pair<Color, Integer>, Integer> atomMap; //TODO replace this with static calculation ceil(x/3) bzw. ceil(x/3)-{0,1,2}
-	
 	/**
 	 * Gets a graph as input and generates a (representation of a) propositional formula that is satisfiable iff the graph has a valid coloring. 
 	 *  
@@ -34,7 +29,6 @@ public class SatEncodings {
 	 * @return cnf formula
 	 */
 	public IVec<IVecInt> validColoring(DefaultDirectedGraph<Integer, DefaultEdge> graph) {
-		atomMap = new HashMap<>();
 		IVec<IVecInt> cnf = new Vec<IVecInt>();
 		VecInt clause = new VecInt();
 		int varCnt = 0;
@@ -43,10 +37,6 @@ public class SatEncodings {
 		for(Integer vertex : graph.vertexSet()) {
 			varCnt++;
 			int blue = varCnt, red = ++varCnt, green = ++varCnt;
-			
-			//atomMap.put(Pair.with(Color.BLUE, vertex), blue);
-			//atomMap.put(Pair.with(Color.RED, vertex), red);
-			//atomMap.put(Pair.with(Color.GREEN, vertex), green);
 
 			clause.push(blue);
 			clause.push(red);
@@ -74,8 +64,6 @@ public class SatEncodings {
 				clause = new VecInt();
 				clause.push(-(vertex*3));
 				clause.push(target*3-1);
-				//clause.push(-atomMap.get(Pair.with(Color.GREEN, vertex)));
-				//clause.push(atomMap.get(Pair.with(Color.RED, target)));
 				cnf.push(clause);
 			}
 		}
@@ -89,20 +77,16 @@ public class SatEncodings {
 			if(!sourceList.isEmpty()) {
 				clause = new VecInt();
 				clause.push(-(vertex*3-1));
-				//clause.push(-atomMap.get(Pair.with(Color.RED, vertex)));
 				for(Integer source : sourceList) {
 					clause.push(source*3);
-					//clause.push(atomMap.get(Pair.with(Color.GREEN, source)));
 				}
 				cnf.push(clause);
 			} else {
 				clause = new VecInt();
 				clause.push(-(vertex*3-1));
-				//clause.push(-atomMap.get(Pair.with(Color.RED, vertex)));
 				cnf.push(clause);
 			}
 		}
-		//System.out.println("AtomMap: "+atomMap.toString());
 		return cnf;
 	}
 
@@ -115,11 +99,10 @@ public class SatEncodings {
 	public IVec<IVecInt> validColoringNoBlue(DefaultDirectedGraph<Integer, DefaultEdge> graph) {
 		IVec<IVecInt> cnf = validColoring(graph);
 		VecInt clause;
-		
+
 		/* create all clauses for the additional 4th rule, dealing with nodes not being colored blue */
 		for(Integer vertex : graph.vertexSet()) {
 			int blue = vertex*3-2;
-			//int blue = atomMap.get(Pair.with(Color.BLUE, vertex));
 			clause = new VecInt();		
 			clause.push(-blue);
 			cnf.push(clause);
@@ -138,9 +121,35 @@ public class SatEncodings {
 	 * @return CNF formula
 	 */
 	public IVec<IVecInt> minColoring(DefaultDirectedGraph<Integer, DefaultEdge> graph, Coloring coloring) {
-		return null;
+		Set<Integer> blueVerteces = new HashSet<>(), otherVerteces = new HashSet<>();
+		for(Integer vertex : graph.vertexSet()) {
+			if(coloring.getColor(vertex).equals(Color.BLUE)) {
+				blueVerteces.add(vertex);
+			} else {
+				otherVerteces.add(vertex);
+			}
+		}
+		VecInt clause = new VecInt();
+		IVec<IVecInt> cnf = validColoring(graph);
 
-		//TODO
+		/* add clause to ensure that the set of blue nodes in the
+		 * new coloring will be a strict subset of these blue verteces */
+		for(Integer blue : blueVerteces) {
+			clause.push(-(blue*3-2));
+		}
+		if(!clause.isEmpty()) {
+			cnf.push(clause);
+		}
+
+		/* add clauses to ensure that no formerly non-blue node will
+		 * be colored blue in the next iteration */
+		for(Integer other : otherVerteces) {
+			clause = new VecInt();
+			clause.push(-(other*3-2));
+			cnf.push(clause);
+		}
+
+		return cnf;
 	}
 
 
@@ -168,13 +177,6 @@ public class SatEncodings {
 					break;
 				}
 				coloring.setColor((int)(Math.ceil((float)atom/3)), color);
-				//for(Map.Entry<Pair<Color, Integer>, Integer> entry : atomMap.entrySet()) {
-					/* this is ok since the values are unique by design */
-				//	if(entry.getValue().equals(atom)) {
-				//		Pair<Color, Integer> key = entry.getKey();
-				//		coloring.setColor(key.getValue1(), key.getValue0());
-				//	}
-				//}
 			}
 		}
 	}

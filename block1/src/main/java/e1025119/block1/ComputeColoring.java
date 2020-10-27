@@ -3,7 +3,6 @@ package e1025119.block1;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -157,19 +156,46 @@ public class ComputeColoring {
 				System.out.println("There is no valid coloring without coloring vertices blue.");
 			}			
 		} catch (ContradictionException e) {
-			System.out.println("There is no valid coloring withtout coloring vertices blue.");
+			System.out.println("There is no valid coloring without coloring vertices blue.");
 		}
 
 	}
 
 	private static void computeMinColoring(DefaultDirectedGraph<Integer,DefaultEdge> graph)throws TimeoutException, ImportException, IOException {
+		/* check first if there is a non-blue coloring */
+
+		SatEncodings reductionNB= new SatEncodings();	  
+		IVec<IVecInt> cnfNB = reductionNB.validColoringNoBlue(graph);
+		ISolver solverNB = SolverFactory.newDefault();
+		try {
+			solverNB.addAllClauses(cnfNB);		
+			IProblem instance = solverNB;
+			solverNB.setTimeout(3600);
+			if (instance.isSatisfiable()) {
+				int model[] = instance.model();
+				Coloring coloringNB = new Coloring(graph);
+				reductionNB.getColoringFromModel(coloringNB, model);
+				if(coloringNB.isValidColoringOf(graph)) {
+					System.out.println("CNF: "+ clauseForm(cnfNB));
+					System.out.println("Coloring: " + coloringNB);
+					return;
+				}
+			} else {
+				System.out.println("There is no valid coloring without coloring vertices blue.");
+			}					
+		} catch (ContradictionException e) {
+			System.out.println("There is no valid coloring without coloring vertices blue.");
+		}
+
+		/* continue with finding the blue minimal coloring */
+
 		SatEncodings reduction= new SatEncodings();
 		int counter=1;
 		/*
 		 *  Compute a first coloring		
 		 */
 		IVec<IVecInt> cnf = reduction.validColoring(graph);
-		//System.out.println("CNF: "+ clauseForm(cnf));	
+		System.out.println(counter+": CNF: "+ clauseForm(cnf));	
 
 		Coloring coloring = new Coloring(graph);
 		ISolver solver = SolverFactory.newDefault();	
@@ -192,12 +218,12 @@ public class ComputeColoring {
 			System.out.println("There is no valid coloring.");
 		}
 		/*
-		 *  Iteratively shrinks the coloring		
+		 *  Iteratively shrinks the coloring
 		 */				
 		while (true) {		
 			// CNF testing whether the given coloring is minimal
 			cnf = reduction.minColoring(graph, coloring);		
-			//System.out.println(counter + ": CNF: "+ clauseForm(cnf));
+			System.out.println(counter + ": CNF: "+ clauseForm(cnf));
 			solver = SolverFactory.newDefault();
 			try {
 				solver.addAllClauses(cnf);

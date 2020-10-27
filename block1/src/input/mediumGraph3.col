@@ -1,0 +1,28 @@
+c
+c SOURCE: Generated using the JGraphT library
+c
+p edge 6 6
+e 1 5
+e 2 6
+e 6 6
+e 6 4
+e 4 3
+e 5 1
+c valid bbrgbb
+c valid rgbbgr
+c valid bgbbbr
+c valid rbrggb
+c valid gggbrr
+c valid bggbbr
+c valid bbgbbb
+c valid bbbbbb
+c valid rbbbgb
+c valid ggrgrr
+c valid bgrgbr
+c valid rbgbgb
+c valid rgrggr
+c valid ggbbrr
+c valid gbbbrb
+c valid gbrgrb
+c valid gbgbrb
+c valid rggbgr
