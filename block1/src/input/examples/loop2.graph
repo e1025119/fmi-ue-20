@@ -1,0 +1,5 @@
+c
+c here we need to color the vertex blue
+c 
+p edge 1 1
+e 1 1
