@@ -223,7 +223,7 @@ public class ComputeColoring {
 		while (true) {		
 			// CNF testing whether the given coloring is minimal
 			cnf = reduction.minColoring(graph, coloring);		
-			System.out.println(counter + ": CNF: "+ clauseForm(cnf));
+			//System.out.println(counter + ": CNF: "+ clauseForm(cnf));
 			solver = SolverFactory.newDefault();
 			try {
 				solver.addAllClauses(cnf);
@@ -239,7 +239,7 @@ public class ComputeColoring {
 				int model[] = instance.model();
 				coloring = new Coloring(graph);
 				reduction.getColoringFromModel(coloring, model);
-				System.out.println(counter + ": Coloring: " + coloring);
+				//System.out.println(counter + ": Coloring: " + coloring);
 			}
 		}
 		System.out.println("Min Coloring: " + coloring);
